@@ -1,0 +1,73 @@
+openapi: 3.0.3
+info:
+  title: Telemetry API
+  version: 1.0.0
+  description: API för telemetridata
+
+servers:
+  - url: http://localhost:5000
+
+paths:
+  /health:
+    get:
+      summary: Healthcheck
+      responses:
+        "200":
+          description: API är igång
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+
+  /api/v1/telemetry:
+    post:
+      summary: Tar emot telemetri
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sensor_id
+                - metric_type
+                - value
+                - timestamp
+              properties:
+                sensor_id:
+                  type: string
+                metric_type:
+                  type: string
+                value:
+                  type: number
+                timestamp:
+                  type: string
+                  format: date-time
+      responses:
+        "201":
+          description: Telemetri skapad
+
+    get:
+      summary: Hämtar telemetri
+      parameters:
+        - name: sensor_id
+          in: query
+          schema:
+            type: string
+        - name: metric_type
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista med telemetri
+
+  /openapi.json:
+    get:
+      summary: Returnerar OpenAPI-specen
+      responses:
+        "200":
+          description: OpenAPI JSON

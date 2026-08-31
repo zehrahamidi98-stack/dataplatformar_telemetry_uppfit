@@ -1,0 +1,69 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: telemetry_db
+    restart: always
+
+    environment:
+      POSTGRES_DB: telemetry_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+    networks:
+      - backend
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d telemetry_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: telemetry_api
+    restart: always
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    ports:
+      - "5000:5000"
+
+    networks:
+      - frontend
+      - backend
+
+  tests:
+    image: schemathesis/schemathesis:stable
+    container_name: telemetry_tests
+
+    command: >
+      run http://api:5000/openapi.json
+      --checks all
+      --exitfirst
+
+    networks:
+      - backend
+
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  db_data:
+
+networks:
+  frontend:
+    driver: bridge
+
+  backend:
+    driver: bridge
+    internal: true
